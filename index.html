@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silentmog</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: Arial, sans-serif; color:white; overflow-x:hidden; background:black; }
+canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; }
+
+header {
+  position: relative;
+  z-index:3;
+  padding:15px 20px;
+  display:flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap:10px;
+}
+
+header h1 {
+  font-family:'Orbitron', sans-serif;
+  font-size:1.8rem;
+  letter-spacing:2px;
+  position:absolute;
+  left:20px;
+  top:15px;
+  color:white;
+  text-shadow:0 0 8px #fff, 0 0 16px #fff, 0 0 24px #fff;
+}
+
+#time-display {
+  position:absolute;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  font-family:'Orbitron', sans-serif;
+  font-size:1rem;
+  font-weight:bold;
+  color:#fff;
+  text-shadow:0 0 8px #fff, 0 0 16px #fff, 0 0 24px #fff;
+}
+
+.icon-btn {
+  position:relative;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.8);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:50%;
+  font-size:1.2rem;
+  cursor:pointer;
+  transition: background .25s, transform .25s;
+  backdrop-filter: blur(10px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  z-index:4;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+
+#lang-select { 
+  background: black; 
+  color:white; 
+  border:none; 
+  padding:4px 8px; 
+  border-radius:6px; 
+  cursor:pointer; 
+  font-size:0.85rem;
+  transition: transform 0.3s ease;
+}
+
+#cart-count {
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  background:white;
+  color:black;
+  font-size:0.75rem;
+  font-weight:bold;
+  padding:2px 6px;
+  border-radius:50%;
+  display:none;
+  text-shadow:0 0 8px #fff, 0 0 16px #fff, 0 0 24px #fff;
+}
+
+main { position: relative; z-index:2; padding:20px; }
+.grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+.card { position:relative; background: rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:20px; backdrop-filter: blur(12px); box-shadow:0 8px 24px rgba(0,0,0,0.5); transition: transform .3s; cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+.card:hover { transform: translateY(-8px) scale(1.02); }
+.card img { width:200px; height:auto; border-radius:50%; margin-bottom:10px; }
+.card h3 { margin-bottom:6px; font-size:1.1rem; text-align:center; }
+.price { font-weight:bold; font-size:1.3rem; text-align:center; margin-bottom:10px; }
+.btn { display:inline-block; padding:8px 14px; background: rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:8px; font-size:0.9rem; cursor:pointer; transition: background .2s, transform .2s; color:white; font-weight:bold; text-align:center; box-shadow:0 0 8px #fff, 0 0 16px #fff, 0 0 24px #fff; }
+.btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+
+.overlay { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index:40; display:none; backdrop-filter: blur(3px); }
+
+.panels {
+  position: fixed;
+  top:50%;
+  left:50%;
+  transform: translate(-50%,-50%);
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  z-index:50;
+}
+
+.cart-panel, .payment-panel {
+  width:320px;
+  max-width:90%;
+  max-height:80vh;
+  background: rgba(255,255,255,0.08);
+  border-radius:20px;
+  backdrop-filter: blur(20px);
+  border:1px solid rgba(255,255,255,0.15);
+  box-shadow:0 8px 24px rgba(0,0,0,0.6);
+  padding:20px;
+  overflow-y:auto;
+  opacity:0;
+  transform: scale(0.9);
+  transition: all 0.3s ease;
+}
+.cart-panel.open, .payment-panel.open { opacity:1; transform: scale(1); }
+
+.cart-panel h2, .payment-panel h2 {
+  font-family:'Orbitron', sans-serif;
+  font-size:1.2rem;
+  margin-bottom:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.close-cart, .close-payment { background: transparent; border:none; color:white; font-size:1.2rem; cursor:pointer; position:absolute; right:20px; top:20px; }
+
+.cart-item { border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0; display:flex; justify-content: space-between; align-items:center; }
+.qty-controls { display:flex; align-items:center; gap:6px; }
+.qty-btn { background: rgba(255,255,255,0.1); border-radius:6px; padding:2px 6px; cursor:pointer; user-select:none; }
+.qty-btn:hover { background: rgba(255,255,255,0.2); }
+.cart-total { margin-top:15px; font-weight:bold; font-size:1.1rem; text-align:right; color:white; }
+
+#coupon-container { margin-top:15px; display:flex; gap:6px; justify-content:center; align-items:center; }
+#coupon-input { flex:1; padding:4px 6px; border-radius:6px; border:none; }
+#apply-coupon { padding:4px 10px; border-radius:6px; border:none; background:white; color:black; cursor:pointer; font-weight:bold; }
+#coupon-message { text-align:center; margin-top:5px; font-size:0.9rem; color:#0f0; }
+
+.payment-panel p {
+  text-align:center;
+  font-weight:bold;
+  margin-bottom:15px;
+  font-size:1rem;
+}
+
+.payment-panel .btn {
+  display:block;
+  width:100%;
+  margin:20px 0 0 0; /* zvýšený margin-top */
+}
+
+.pay-logo {
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  max-height: 32px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="galaxy"></canvas>
+
+<header>
+  <h1>Silentmog</h1>
+  <div id="time-display">--:--:--</div>
+  <select id="lang-select">
+    <option value="sk">Slovak</option>
+    <option value="en">English</option>
+  </select>
+  <button class="icon-btn" id="cart-btn">💰<span id="cart-count">0</span></button>
+</header>
+
+<main>
+<div class="grid">
+  <!-- Product 1 -->
+  <div class="card">
+    <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/MWP22_AV1?wid=200&hei=200&fmt=png-alpha&.v=1591634795000" alt="AirPods Pro">
+    <h3 data-en="AirPods Pro 2" data-sk="AirPods Pro 2">AirPods Pro 2</h3>
+    <div class="price">€159</div>
+    <button class="btn add-to-cart" data-en="Add" data-sk="Pridať">Add</button>
+  </div>
+
+  <!-- Product 2 -->
+  <div class="card">
+    <img src="https://via.placeholder.com/300x200" alt="">
+    <h3 data-en="Product 2" data-sk="Produkt 2">Product 2</h3>
+    <div class="price">€29</div>
+    <button class="btn add-to-cart" data-en="Add" data-sk="Pridať">Add</button>
+  </div>
+</div>
+</main>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="panels" id="panels">
+  <div class="cart-panel" id="cart-panel">
+    <h2>Cart <button class="close-cart" id="close-cart">❌</button></h2>
+    <div id="cart-items"></div>
+    <div class="cart-total" id="cart-total">Total: €0</div>
+
+    <div id="coupon-container">
+      <input type="text" id="coupon-input" placeholder="Enter coupon code">
+      <button id="apply-coupon">Apply</button>
+    </div>
+    <div id="coupon-message"></div>
+
+    <button class="btn" id="checkout-btn">Proceed to Payment</button>
+  </div>
+
+  <div class="payment-panel" id="payment-panel">
+    <h2>Payment <button class="close-payment" id="close-payment">❌</button></h2>
+    <p>Choose payment method:</p>
+    <button class="btn" onclick="window.open('https://www.paypal.com','_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" class="pay-logo">
+    </button>
+    <button class="btn" onclick="window.open('https://www.paysafecard.com','_blank')">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/Paysafecard_logo.svg" alt="Paysafecard" class="pay-logo">
+    </button>
+  </div>
+</div>
+
+<script>
+// Galaxy background
+const canvas=document.getElementById("galaxy");
+const ctx=canvas.getContext("2d");
+let stars=[],w,h;
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;stars=Array.from({length:200},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+0.5,dx:(Math.random()-0.5)*0.2,dy:(Math.random()-0.5)*0.2}));}
+function draw(){ctx.fillStyle="black";ctx.fillRect(0,0,w,h);for(let s of stars){s.x+=s.dx;s.y+=s.dy;if(s.x<0)s.x=w;if(s.x>w)s.x=0;if(s.y<0)s.y=h;if(s.y>h)s.y=0;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle="white";ctx.fill();}requestAnimationFrame(draw);}
+window.addEventListener("resize",resize);resize();draw();
+
+// Cart logic
+const cartBtn=document.getElementById("cart-btn");
+const cartCount=document.getElementById("cart-count");
+const cartPanel=document.getElementById("cart-panel");
+const paymentPanel=document.getElementById("payment-panel");
+const overlay=document.getElementById("overlay");
+const closeCartBtn=document.getElementById("close-cart");
+const closePaymentBtn=document.getElementById("close-payment");
+const checkoutBtn=document.getElementById("checkout-btn");
+const cartItemsContainer=document.getElementById("cart-items");
+const cartTotal=document.getElementById("cart-total");
+
+const couponInput=document.getElementById("coupon-input");
+const applyCoupon=document.getElementById("apply-coupon");
+const couponMessage=document.getElementById("coupon-message");
+
+let cart=[];
+let couponApplied=false;
+
+function updateCart(){
+  cartItemsContainer.innerHTML="";
+  let total=0;
+  cart.forEach((item,index)=>{
+    const div=document.createElement("div");
+    div.classList.add("cart-item");
+    div.innerHTML=`
+      <div>
+        <span><strong>${item.name}</strong></span>
+        <span>€${(item.value*item.qty).toFixed(2)}</span>
+      </div>
+      <div class="qty-controls">
+        <div class="qty-btn" data-action="minus" data-index="${index}">-</div>
+        <span>${item.qty}</span>
+        <div class="qty-btn" data-action="plus" data-index="${index}">+</div>
+      </div>
+      <button class="remove-btn" data-index="${index}">❌</button>
+    `;
+    cartItemsContainer.appendChild(div);
+    total+=item.value*item.qty;
+  });
+
+  if(cart.length === 0){ couponApplied = false; couponMessage.textContent=""; }
+
+  if(couponApplied) total *= 0.8;
+
+  cartCount.style.display=cart.length>0?"block":"none";
+  cartCount.textContent=cart.reduce((a,b)=>a+b.qty,0);
+  cartTotal.textContent="Total: €"+total.toFixed(2);
+
+  checkoutBtn.style.display = cart.length > 0 ? "block" : "none";
+
+  document.querySelectorAll(".qty-btn").forEach(btn=>{
+    btn.onclick=()=>{ 
+      const idx=btn.dataset.index;
+      if(btn.dataset.action==="plus") cart[idx].qty++;
+      if(btn.dataset.action==="minus"){ cart[idx].qty--; if(cart[idx].qty<=0) cart.splice(idx,1); }
+      updateCart();
+    };
+  });
+  document.querySelectorAll(".remove-btn").forEach(btn=>{
+    btn.onclick=()=>{
+      const idx=btn.dataset.index;
+      cart.splice(idx,1);
+      updateCart();
+    };
+  });
+}
+
+document.querySelectorAll(".add-to-cart").forEach(btn=>{
+  btn.onclick=()=>{
+    const card=btn.closest(".card");
+    const name=card.querySelector("h3").textContent;
+    const value=parseFloat(card.querySelector(".price").textContent.replace("€",""));
+    const existing=cart.find(c=>c.name===name);
+    if(existing) existing.qty++;
+    else cart.push({name,value,qty:1});
+    updateCart();
+  };
+});
+
+cartBtn.onclick=()=>{
+  cartPanel.classList.toggle("open");
+  paymentPanel.classList.remove("open");
+  overlay.style.display=cartPanel.classList.contains("open")?"block":"none";
+};
+closeCartBtn.onclick=()=>{ cartPanel.classList.remove("open"); paymentPanel.classList.remove("open"); overlay.style.display="none"; };
+checkoutBtn.onclick=()=>{ paymentPanel.classList.add("open"); };
+closePaymentBtn.onclick=()=>{ paymentPanel.classList.remove("open"); };
+
+// Coupon logic
+applyCoupon.onclick = ()=>{
+  const code = couponInput.value.trim().toLowerCase();
+  if(code === "cajozuvak20" && cart.length>0){
+    couponApplied = true;
+    couponMessage.textContent = "Coupon applied! 20% discount.";
+  } else {
+    couponApplied = false;
+    couponMessage.textContent = "Invalid coupon or empty cart!";
+  }
+  updateCart();
+}
+
+// Language + Clock
+const langSelect=document.getElementById("lang-select");
+const timeDisplay=document.getElementById("time-display");
+
+function updateClock(){
+  const lang=langSelect.value;
+  let now=new Date();
+  let options={hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false};
+  if(lang==="sk"){ timeDisplay.textContent=now.toLocaleTimeString("sk-SK",options); } 
+  else { timeDisplay.textContent=now.toLocaleTimeString("en-US",{...options,timeZone:"America/New_York"}); }
+}
+setInterval(updateClock,1000); updateClock();
+
+langSelect.onchange=()=>{
+  langSelect.style.transform="scale(1.2)";
+  setTimeout(()=>{ langSelect.style.transform="scale(1)"; },300);
+  updateClock();
+  const lang=langSelect.value;
+  document.querySelectorAll("[data-en]").forEach(el=>{ 
+    if(el.dataset.en) el.textContent=lang==="en"?el.dataset.en:el.dataset.sk; 
+  });
+};
+</script>
+</body>
+</html>
