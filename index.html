@@ -111,7 +111,7 @@ main { position: relative; z-index:2; padding:20px; }
 }
 
 .cart-panel, .payment-panel {
-  width:320px;
+  width:340px;
   max-width:90%;
   max-height:80vh;
   background: rgba(255,255,255,0.08);
@@ -124,12 +124,12 @@ main { position: relative; z-index:2; padding:20px; }
   opacity:0;
   transform: scale(0.9);
   transition: all 0.3s ease;
-  pointer-events: none; /* defaultne neklikateľné */
+  pointer-events: none;
 }
 .cart-panel.open, .payment-panel.open { 
   opacity:1; 
   transform: scale(1); 
-  pointer-events: auto; /* klikateľné len keď open */
+  pointer-events: auto;
 }
 
 .cart-panel h2, .payment-panel h2 {
@@ -142,7 +142,15 @@ main { position: relative; z-index:2; padding:20px; }
 
 .close-cart, .close-payment { background: transparent; border:none; color:white; font-size:1.2rem; cursor:pointer; position:absolute; right:20px; top:20px; }
 
-.cart-item { border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0; display:flex; justify-content: space-between; align-items:center; }
+.cart-item { 
+  border-bottom:1px solid rgba(255,255,255,0.1); 
+  padding:10px 0; 
+  display:flex; 
+  align-items:center; 
+  gap:10px;
+}
+.cart-item img { width:40px; height:40px; object-fit:contain; border-radius:6px; }
+
 .qty-controls { display:flex; align-items:center; gap:6px; }
 .qty-btn { background: rgba(255,255,255,0.1); border-radius:6px; padding:2px 6px; cursor:pointer; user-select:none; }
 .qty-btn:hover { background: rgba(255,255,255,0.2); }
@@ -190,7 +198,7 @@ main { position: relative; z-index:2; padding:20px; }
 
 <main>
 <div class="grid">
-  <!-- Product 1 -->
+  <!-- AirPods Pro -->
   <div class="card">
     <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/MWP22_AV1?wid=200&hei=200&fmt=png-alpha&.v=1591634795000" alt="AirPods Pro">
     <h3 data-en="AirPods Pro 2" data-sk="AirPods Pro 2">AirPods Pro 2</h3>
@@ -198,11 +206,11 @@ main { position: relative; z-index:2; padding:20px; }
     <button class="btn add-to-cart" data-en="Add" data-sk="Pridať">Add</button>
   </div>
 
-  <!-- Product 2 -->
+  <!-- MacBook Pro 14 -->
   <div class="card">
-    <img src="https://via.placeholder.com/300x200" alt="">
-    <h3 data-en="Product 2" data-sk="Produkt 2">Product 2</h3>
-    <div class="price">€29</div>
+    <img src="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/mbp14-spacegray-select-202301?wid=400&hei=400&fmt=png-alpha&.v=1671319678000" alt="MacBook Pro 14">
+    <h3 data-en="MacBook Pro 14”" data-sk="MacBook Pro 14”">MacBook Pro 14”</h3>
+    <div class="price">€2000</div>
     <button class="btn add-to-cart" data-en="Add" data-sk="Pridať">Add</button>
   </div>
 </div>
@@ -272,9 +280,10 @@ function updateCart(){
     const div=document.createElement("div");
     div.classList.add("cart-item");
     div.innerHTML=`
-      <div>
-        <span><strong>${item.name}</strong></span>
-        <span>€${(item.value*item.qty).toFixed(2)}</span>
+      <img src="${item.img}" alt="${item.name}">
+      <div style="flex:1;">
+        <div><strong>${item.name}</strong></div>
+        <div>€${(item.value*item.qty).toFixed(2)}</div>
       </div>
       <div class="qty-controls">
         <div class="qty-btn" data-action="minus" data-index="${index}">-</div>
@@ -315,9 +324,10 @@ document.querySelectorAll(".add-to-cart").forEach(btn=>{
     const card=btn.closest(".card");
     const name=card.querySelector("h3").textContent;
     const value=parseFloat(card.querySelector(".price").textContent.replace("€",""));
+    const img=card.querySelector("img").src;
     const existing=cart.find(c=>c.name===name);
     if(existing) existing.qty++;
-    else cart.push({name,value,qty:1});
+    else cart.push({name,value,qty:1,img});
     updateCart();
   };
 });
