@@ -124,8 +124,13 @@ main { position: relative; z-index:2; padding:20px; }
   opacity:0;
   transform: scale(0.9);
   transition: all 0.3s ease;
+  pointer-events: none; /* defaultne neklikateľné */
 }
-.cart-panel.open, .payment-panel.open { opacity:1; transform: scale(1); }
+.cart-panel.open, .payment-panel.open { 
+  opacity:1; 
+  transform: scale(1); 
+  pointer-events: auto; /* klikateľné len keď open */
+}
 
 .cart-panel h2, .payment-panel h2 {
   font-family:'Orbitron', sans-serif;
@@ -158,7 +163,7 @@ main { position: relative; z-index:2; padding:20px; }
 .payment-panel .btn {
   display:block;
   width:100%;
-  margin:20px 0 0 0; /* zvýšený margin-top */
+  margin:20px 0 0 0;
 }
 
 .pay-logo {
@@ -301,11 +306,7 @@ function updateCart(){
     };
   });
   document.querySelectorAll(".remove-btn").forEach(btn=>{
-    btn.onclick=()=>{
-      const idx=btn.dataset.index;
-      cart.splice(idx,1);
-      updateCart();
-    };
+    btn.onclick=()=>{ cart.splice(btn.dataset.index,1); updateCart(); };
   });
 }
 
@@ -329,6 +330,7 @@ cartBtn.onclick=()=>{
 closeCartBtn.onclick=()=>{ cartPanel.classList.remove("open"); paymentPanel.classList.remove("open"); overlay.style.display="none"; };
 checkoutBtn.onclick=()=>{ paymentPanel.classList.add("open"); };
 closePaymentBtn.onclick=()=>{ paymentPanel.classList.remove("open"); };
+overlay.onclick=()=>{ cartPanel.classList.remove("open"); paymentPanel.classList.remove("open"); overlay.style.display="none"; };
 
 // Coupon logic
 applyCoupon.onclick = ()=>{
